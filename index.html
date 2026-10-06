@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FF8F00">
+<title>拼音过关练习</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --bg:#FFF8E7; --card:#FFFFFF; --ink:#3E2723; --sub:#8D6E63;
+  --orange:#FF9800; --orange-d:#F57C00; --blue:#42A5F5; --blue-d:#1E88E5;
+  --red:#EF5350; --red-d:#E53935; --gray:#90A4AE; --gray-d:#78909C;
+  --green:#43A047; --radius:20px;
+  --t1:#E53935; --t2:#FB8C00; --t3:#43A047; --t4:#1E88E5; --t0:#90A4AE;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+button{touch-action:manipulation;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); min-height:100vh;
+}
+#app{max-width:520px;margin:0 auto;padding:12px 14px 40px;}
+
+/* ===== 顶栏 ===== */
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.btn-back{
+  border:none;background:#fff;border-radius:14px;padding:8px 14px;font-size:15px;
+  color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08);cursor:pointer;
+}
+.top-title{flex:1;text-align:center;font-size:18px;font-weight:800;}
+.badge-btn{position:relative;border:none;background:#fff;border-radius:14px;padding:8px 12px;font-size:15px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:10px;font-size:11px;padding:1px 6px;font-weight:700;}
+
+/* ===== 首页 ===== */
+.hero{text-align:center;padding:18px 8px 6px;}
+.hero h1{font-size:26px;margin:4px 0;color:var(--orange-d);}
+.hero p{margin:0;color:var(--sub);font-size:14px;}
+.ch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px;}
+.ch-card{
+  background:var(--card);border-radius:var(--radius);padding:12px 12px 10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;border:2px solid transparent;
+  transition:transform .12s;
+}
+.ch-card:active{transform:scale(.96);}
+.ch-card .num{
+  display:inline-block;background:var(--orange);color:#fff;border-radius:12px;
+  font-size:13px;font-weight:800;padding:2px 10px;
+}
+.ch-card h3{margin:8px 0 2px;font-size:17px;}
+.ch-card .sub{font-size:12px;color:var(--sub);}
+.ch-card .meta{font-size:11px;color:var(--sub);margin-top:6px;}
+.ch-card.special{border-color:var(--red);}
+.ch-card.special .num{background:var(--red);}
+.footer-note{text-align:center;color:var(--sub);font-size:11px;margin-top:18px;line-height:1.6;}
+
+/* ===== 练习页 ===== */
+.timer-box{text-align:center;margin:2px 0 8px;}
+.timer{
+  font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;
+  color:var(--ink);background:#fff;display:inline-block;padding:4px 22px;border-radius:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);
+}
+.timer.running{color:var(--green);}
+.best-line{font-size:12px;color:var(--sub);margin-top:2px;}
+
+.progress-wrap{margin:8px 0;}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:4px;}
+.progress-bar{height:10px;background:#EFE6D2;border-radius:8px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--orange),#FFC107);border-radius:8px;transition:width .3s;}
+
+.pinyin-card{
+  background:var(--card);border-radius:24px;margin:10px 0;padding:30px 16px;
+  text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.08);min-height:150px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;
+}
+.pinyin-big{font-size:64px;font-weight:900;letter-spacing:2px;line-height:1.2;}
+.pinyin-word{font-size:40px;font-weight:900;letter-spacing:2px;line-height:1.25;}
+.chars-hint{font-size:18px;color:var(--sub);letter-spacing:6px;}
+.hint{font-size:15px;color:var(--sub);}
+.hint .emo{font-size:34px;display:block;margin-bottom:6px;}
+.tone-1{color:var(--t1);} .tone-2{color:var(--t2);} .tone-3{color:var(--t3);}
+.tone-4{color:var(--t4);} .tone-0{color:var(--t0);}
+@keyframes pop{0%{transform:scale(.5) rotate(-4deg);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+.pop{animation:pop .32s ease;}
+
+.summary{font-size:15px;line-height:2;color:var(--ink);}
+.summary .big{font-size:22px;font-weight:900;color:var(--orange-d);}
+.record{display:inline-block;background:#FFF3E0;border:2px solid var(--orange);color:var(--orange-d);border-radius:14px;padding:2px 14px;font-weight:800;font-size:15px;}
+
+/* ===== 四个功能区按钮 ===== */
+.func-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.func-btn{
+  border:none;border-radius:22px;padding:20px 8px;font-size:19px;font-weight:800;color:#fff;
+  cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.15);display:flex;flex-direction:column;gap:6px;
+  align-items:center;transition:transform .1s;
+}
+.func-btn:active{transform:scale(.94);}
+.func-btn .ico{font-size:30px;}
+.func-btn.draw{background:linear-gradient(180deg,#FFB74D,#F57C00);grid-column:1/3;font-size:22px;}
+.func-btn.read{background:linear-gradient(180deg,#64B5F6,#1E88E5);}
+.func-btn.wrong{background:linear-gradient(180deg,#EF9A9A,#E53935);}
+.func-btn.reset{background:linear-gradient(180deg,#B0BEC5,#78909C);}
+.func-btn:disabled{opacity:.45;cursor:not-allowed;}
+.func-btn.wrong.on{outline:3px solid #B71C1C;}
+
+.note-line{background:#FFF3E0;border-radius:14px;padding:10px 14px;font-size:13px;color:#8D5B1B;margin-top:12px;line-height:1.6;}
+
+/* ===== 已抽历史 ===== */
+.history{margin-top:14px;}
+.history h4{margin:4px 0 8px;font-size:14px;color:var(--sub);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  background:#fff;border-radius:14px;padding:7px 12px;font-size:17px;font-weight:800;
+  box-shadow:0 2px 5px rgba(0,0,0,.07);cursor:pointer;border:2px solid transparent;
+}
+.chip.cur{border-color:var(--orange);background:#FFF8E7;}
+.chip small{font-weight:600;color:var(--sub);font-size:11px;margin-left:2px;}
+
+/* ===== 错题集 ===== */
+.wrong-head{display:flex;gap:10px;margin-bottom:12px;}
+.wrong-head button{flex:1;border:none;border-radius:16px;padding:13px;font-size:16px;font-weight:800;color:#fff;cursor:pointer;}
+.w-practice{background:linear-gradient(180deg,#FFB74D,#F57C00);}
+.w-clear{background:linear-gradient(180deg,#B0BEC5,#78909C);}
+.wrong-item{
+  background:#fff;border-radius:16px;padding:10px 14px;margin-bottom:10px;
+  display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
+.wrong-item .w-t{flex:1;font-size:24px;font-weight:900;letter-spacing:2px;}
+.wrong-item .w-t .src{display:block;font-size:11px;color:var(--sub);font-weight:600;letter-spacing:1px;margin-top:2px;}
+.wrong-item button{border:none;border-radius:12px;padding:8px 12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;}
+.w-play{background:var(--blue);}
+.w-del{background:var(--gray-d);}
+.empty-tip{text-align:center;color:var(--sub);padding:40px 10px;font-size:15px;line-height:2;}
+.empty-tip .emo{font-size:44px;display:block;}
+
+/* ===== Toast ===== */
+#toast{
+  position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(80px);
+  background:rgba(62,39,35,.92);color:#fff;padding:10px 20px;border-radius:24px;font-size:15px;
+  transition:transform .25s;z-index:99;max-width:86vw;text-align:center;pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ===== 平板竖屏（较宽屏幕） ===== */
+@media (min-width:700px){
+  #app{max-width:660px;}
+  .ch-grid{grid-template-columns:repeat(3,1fr);}
+  .pinyin-big{font-size:76px;}
+}
+
+/* ===== 平板横屏：双栏布局 ===== */
+@media (orientation:landscape) and (min-width:900px) and (min-height:500px){
+  #app{max-width:1120px;padding:14px 24px 36px;}
+  .hero h1{font-size:24px;}
+  .hero{padding:10px 8px 4px;}
+  .ch-grid{grid-template-columns:repeat(4,1fr);gap:12px;}
+  /* 练习页：左题卡 右功能区 */
+  .practice-main{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;align-items:start;}
+  .col-right .func-grid{margin-top:0;}
+  .pinyin-card{min-height:290px;padding:30px 24px;}
+  .pinyin-big{font-size:96px;}
+  .pinyin-word{font-size:58px;}
+  .chars-hint{font-size:22px;letter-spacing:8px;}
+  .func-btn{padding:26px 10px;font-size:23px;}
+  .func-btn .ico{font-size:38px;}
+  .timer{font-size:38px;}
+  .top-title{font-size:20px;}
+  .wrong-list{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .wrong-list .wrong-item{margin-bottom:12px;}
+  .footer-note{margin-top:12px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script src="data.js"></script>
+<script>
+'use strict';
+/* ================= 数据与持久化 ================= */
+const DATA = window.APP_DATA;
+const LS = {
+  wrong:'py_wrong', best:'py_best'
+};
+let wrongSet = [];      // [{ch, chTitle, t, k, type, chars, seg, ak}]
+let bestMap = {};       // chId -> ms
+
+function loadStore(){
+  try{
+    wrongSet = JSON.parse(localStorage.getItem(LS.wrong)||'[]');
+    bestMap = JSON.parse(localStorage.getItem(LS.best)||'{}');
+  }catch(e){ wrongSet=[]; bestMap={}; }
+}
+function saveStore(){
+  try{
+    localStorage.setItem(LS.wrong, JSON.stringify(wrongSet));
+    localStorage.setItem(LS.best, JSON.stringify(bestMap));
+  }catch(e){}
+}
+function wrongKey(it){ return it.ch+'|'+it.t; }
+
+/* ================= 通用 ================= */
+const $app = document.getElementById('app');
+const $toast = document.getElementById('toast');
+let toastTimer = null;
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>$toast.classList.remove('show'), 1800);
+}
+function fmt(ms){
+  const s = Math.floor(ms/1000);
+  return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+/* ================= 音频 ================= */
+let curAudio = null;
+let chainTTS = null;   // 全部音源都失败时才用的兜底 TTS 文本
+let playToken = 0;
+function stopAudio(){
+  playToken++;
+  if(curAudio){ curAudio.onended=null; curAudio.onerror=null; try{curAudio.pause();}catch(e){} curAudio=null; }
+  chainTTS=null;
+  try{ speechSynthesis && speechSynthesis.cancel(); }catch(e){}
+}
+function newAudio(src, onOk, onErr){
+  const a = new Audio();
+  curAudio = a;
+  a.src = src;
+  a.onended = ()=>onOk && onOk();
+  a.onerror = ()=>onErr && onErr();
+  a.play().catch(()=>onErr && onErr());
+}
+/* 播一组候选 url：播成功即止；全部失败才 onAllFail（主音源用） */
+function playOneGroup(urls, onAllFail){
+  const tok = playToken;
+  let i = 0;
+  const tryUrl = ()=>{
+    if(tok !== playToken) return;
+    if(i >= urls.length){ onAllFail && onAllFail(); return; }
+    newAudio(urls[i], ()=>{ /* 正常播完，结束 */ }, ()=>{ i++; tryUrl(); });
+  };
+  tryUrl();
+}
+/* 按音节组连续播放（词语备用：逐音节拼接）；组内出错换候选，组间播完继续 */
+function playGroups(groups, onAllFail){
+  const tok = playToken;
+  let gi = 0, playedAny = false;
+  const tryGroup = ()=>{
+    if(tok !== playToken) return;
+    if(gi >= groups.length){ if(!playedAny && onAllFail) onAllFail(); return; }
+    let ui = 0;
+    const tryUrl = ()=>{
+      if(tok !== playToken) return;
+      if(ui >= groups[gi].length){ gi++; setTimeout(tryGroup, 220); return; }
+      newAudio(groups[gi][ui],
+        ()=>{ playedAny = true; gi++; setTimeout(tryGroup, 220); },
+        ()=>{ ui++; tryUrl(); });
+    };
+    tryUrl();
+  };
+  tryGroup();
+}
+function ttsSay(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang='zh-CN'; u.rate=0.8;
+    const vs = speechSynthesis.getVoices().filter(v=>/^zh/i.test(v.lang));
+    if(vs.length) u.voice = vs[0];
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function itemSrcs(it){
+  /* 返回 [[主音源候选...], [音节组1...], [音节组2...]] */
+  if(it.type==='w'){
+    const groups = [['audio/'+it.ak+'.mp3']];
+    // 备用：逐音节拼接（轻声0先试5声文件，再退1声）
+    it.seg.forEach(s=>{
+      if(/0$/.test(s)){
+        groups.push(['audio/cmn-'+s.replace(/0$/,'5')+'.mp3', 'audio/cmn-'+s.replace(/0$/,'1')+'.mp3']);
+      } else {
+        groups.push(['audio/cmn-'+s+'.mp3']);
+      }
+    });
+    return groups;
+  }
+  return [['audio/cmn-'+it.k+'.mp3']];
+}
+function ttsCb(){
+  if(chainTTS){ const t = chainTTS; chainTTS = null; ttsSay(t); }
+}
+function playItem(it){
+  stopAudio();
+  const groups = itemSrcs(it);
+  chainTTS = (it.type==='w' && it.chars) ? it.chars : it.t;
+  // 主音源播完即止，绝不再接备用音；只有主音源失败才拼接音节，全部失败才走系统语音
+  playOneGroup(groups[0], ()=>{
+    const rest = groups.slice(1);
+    if(rest.length) playGroups(rest, ttsCb);
+    else ttsCb();
+  });
+}
+
+/* ================= 状态 ================= */
+const S = {
+  view:'home', chId:null, pool:[], drawn:[], current:null,
+  startedAt:0, finished:false, newRecord:false, wrongCountInRound:0, timerId:null
+};
+function curChapter(){
+  if(S.chId==='wrong') return null;
+  return DATA.chapters.find(c=>c.id===S.chId)||null;
+}
+function curItems(){
+  if(S.chId==='wrong') return wrongSet.slice();
+  const ch = curChapter();
+  return ch? ch.items : [];
+}
+function itemDisplay(it){
+  /* 返回带声调着色的 HTML */
+  if(it.type==='s'){
+    const tone = parseInt(String(it.k).slice(-1))||0;
+    const cls = tone>=1&&tone<=4 ? 'tone-'+tone : 'tone-0';
+    return '<span class="pinyin-big '+cls+'">'+esc(it.t)+'</span>';
+  }
+  const parts = it.t.split(' ');
+  const segs = it.seg||[];
+  const spans = parts.map((p,i)=>{
+    const tone = segs[i] ? (parseInt(String(segs[i]).slice(-1))||0) : 0;
+    const cls = tone>=1&&tone<=4 ? 'tone-'+tone : 'tone-0';
+    return '<span class="'+cls+'">'+esc(p)+'</span>';
+  }).join(' ');
+  return '<span class="pinyin-word">'+spans+'</span>'+(it.chars?'<span class="chars-hint">'+esc(it.chars)+'</span>':'');
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ================= 计时 ================= */
+function startTimer(){
+  stopTimer();
+  S.timerId = setInterval(()=>{
+    if(S.view!=='practice' || S.finished || !S.startedAt) return;
+    const elt = document.getElementById('timer');
+    if(elt) elt.textContent = fmt(Date.now()-S.startedAt);
+  }, 400);
+}
+function stopTimer(){ if(S.timerId){ clearInterval(S.timerId); S.timerId=null; } }
+function elapsedNow(){ return S.startedAt? (Date.now()-S.startedAt):0; }
+
+/* ================= 渲染 ================= */
+function render(){
+  if(S.view==='home') renderHome();
+  else if(S.view==='practice') renderPractice();
+  else if(S.view==='wrong') renderWrong();
+}
+
+/* ---------- 首页 ---------- */
+function renderHome(){
+  const cards = DATA.chapters.map(c=>{
+    const best = bestMap[c.id];
+    return '<div class="ch-card" data-ch="'+c.id+'">'+
+      '<span class="num">第 '+c.id+' 关</span>'+
+      '<h3>'+esc(c.title)+'</h3><div class="sub">'+esc(c.subtitle)+'</div>'+
+      '<div class="meta">'+c.items.length+' 个练习项'+(best?' ｜ 🏆最快 '+fmt(best):'')+'</div></div>';
+  }).join('');
+  const wc = wrongSet.length;
+  $app.innerHTML =
+    '<div class="hero"><h1>🎯 拼音过关练习</h1><p>基于《拼音一天一过关练习》· 全部真人发音</p></div>'+
+    '<div class="ch-grid">'+cards+
+    '<div class="ch-card special" data-ch="wrong"><span class="num">错题集</span>'+
+    '<h3>📕 错题集</h3><div class="sub">记错的拼音都在这里</div>'+
+    '<div class="meta">'+(wc? wc+' 个错题，可随时移除':'暂无错题')+'</div></div>'+
+    '</div>'+
+    '<div class="footer-note">🔊 音节发音：真人录音（陈旺 老师，CC-BY-SA）<br>词语发音：真人语音合成（微软晓晓）<br>建议手机浏览器打开，可添加到主屏幕离线使用</div>';
+  document.querySelectorAll('.ch-card').forEach(cd=>{
+    cd.addEventListener('click', ()=>{
+      if(cd.dataset.ch==='wrong'){ S.view='wrong'; render(); }
+      else openChapter(parseInt(cd.dataset.ch));
+    });
+  });
+}
+
+/* ---------- 练习页 ---------- */
+function openChapter(id){
+  S.chId = id; S.view='practice';
+  startRound();
+  render();
+  startTimer();
+}
+function startRound(){
+  S.pool = shuffle(curItems());
+  S.drawn = []; S.current = null;
+  S.startedAt = 0; S.finished = false; S.newRecord = false; S.wrongCountInRound = 0;
+  stopAudio();
+}
+function draw(){
+  if(S.finished) return;
+  if(!S.pool.length){ finishRound(); render(); return; }
+  if(!S.startedAt) S.startedAt = Date.now();
+  S.current = S.pool.pop();
+  S.drawn.push(S.current);
+  render();   // 抽取只显示，不自动朗读；点「朗读」按钮听发音
+}
+function finishRound(){
+  S.finished = true;
+  const el = S.startedAt? Date.now()-S.startedAt : 0;
+  if(S.chId!=='wrong' && S.startedAt){
+    const prev = bestMap[S.chId];
+    if(!prev || el < prev){ bestMap[S.chId]=el; S.newRecord=true; }
+    saveStore();
+  }
+}
+function markWrong(){
+  if(!S.current) return;
+  const it = S.current;
+  const origCh = (it.ch!=null)? it.ch : S.chId;
+  const origTitle = origCh==='wrong' ? '错题集'
+    : ((DATA.chapters.find(c=>c.id===origCh)||{}).title||'错题集');
+  const snap = {ch:origCh, chTitle:origTitle, t:it.t, k:it.k||'', type:it.type, chars:it.chars||'', seg:it.seg||[], ak:it.ak||''};
+  const key = wrongKey(snap);
+  const idx = wrongSet.findIndex(w=>wrongKey(w)===key);
+  if(idx>=0){ wrongSet.splice(idx,1); toast('已从错题集移除 ✂️'); }
+  else{
+    wrongSet.push(snap); S.wrongCountInRound++;
+    toast('已记入错题集 📕');
+  }
+  saveStore();
+  render();
+}
+function resetRound(){
+  startRound();
+  render();
+  toast('重新开始！加油 💪');
+}
+function isInWrong(it){
+  if(!it) return false;
+  const key = ((it.ch!=null)?it.ch:S.chId)+'|'+it.t;
+  return wrongSet.some(w=>wrongKey(w)===key);
+}
+function renderPractice(){
+  const ch = curChapter();
+  const title = S.chId==='wrong' ? '错题集练习' : (ch? ch.title : '');
+  const best = S.chId!=='wrong' && bestMap[S.chId] ? bestMap[S.chId] : null;
+  const total = curItems().length;
+  const done = S.drawn.length;
+  const pct = total? Math.round(done/total*100) : 0;
+
+  let cardHtml;
+  if(!S.current && !S.finished){
+    cardHtml = '<span class="hint"><span class="emo">🎲</span>点击「抽取」开始练习<br>点「朗读」听真人发音</span>';
+  } else if(S.finished){
+    cardHtml = '<span class="hint"><span class="emo">🎉</span></span>'+
+      '<div class="summary">本轮完成！共 <b>'+done+'</b> 个<br>用时 <span class="big">'+fmt(elapsedNow())+'</span>'+
+      '<br>本轮记错 '+S.wrongCountInRound+' 个'+
+      (S.newRecord?'<br><span class="record">🏆 新纪录！</span>':'')+
+      '</div>';
+  } else {
+    cardHtml = '<div class="pop" id="pinyinbox">'+itemDisplay(S.current)+'</div>';
+  }
+
+  const curInWrong = isInWrong(S.current);
+  $app.innerHTML =
+    '<div class="topbar">'+
+      '<button class="btn-back" id="btnBack">‹ 返回</button>'+
+      '<div class="top-title">'+esc(title)+'</div>'+
+      '<button class="badge-btn" id="btnWrongSet">📕<span class="badge">'+wrongSet.length+'</span></button>'+
+    '</div>'+
+    '<div class="practice-main">'+
+      '<div class="col-left">'+
+        '<div class="timer-box"><div class="timer'+(S.startedAt&&!S.finished?' running':'')+'" id="timer">'+fmt(S.finished? elapsedNow() : (S.startedAt? elapsedNow():0))+'</div>'+
+        (best? '<div class="best-line">🏆 本关最快 '+fmt(best)+'</div>':'')+
+        '</div>'+
+        '<div class="progress-wrap"><div class="progress-label"><span>本轮已抽 '+done+' 个</span><span>剩 '+S.pool.length+' 个</span></div>'+
+        '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>'+
+        '<div class="pinyin-card">'+cardHtml+'</div>'+
+      '</div>'+
+      '<div class="col-right">'+
+        '<div class="func-grid">'+
+          '<button class="func-btn draw" id="btnDraw" '+(S.finished?'disabled':'')+'><span class="ico">🎲</span>'+(S.finished?'本轮已完成':'抽取下一个')+'</button>'+
+          '<button class="func-btn read" id="btnRead" '+((!S.current||S.finished)?'disabled':'')+'><span class="ico">🔊</span>朗读</button>'+
+          '<button class="func-btn wrong'+(curInWrong?' on':'')+'" id="btnWrong" '+((!S.current||S.finished)?'disabled':'')+'><span class="ico">📕</span>'+(curInWrong?'取消记错':'记错')+'</button>'+
+          '<button class="func-btn reset" id="btnReset"><span class="ico">🔄</span>重新开始</button>'+
+        '</div>'+
+        (ch && ch.note? '<div class="note-line">💡 '+esc(ch.note)+'</div>':'')+
+        (S.drawn.length?
+          '<div class="history"><h4>本轮已抽（点击可重听）</h4><div class="chips">'+
+          S.drawn.map((it,i)=>'<span class="chip'+(it===S.current?' cur':'')+'" data-i="'+i+'">'+itemChipHtml(it)+'</span>').join('')+
+          '</div></div>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="footer-note">真人发音 · 抽到不重复 · 点「朗读」听发音 · 错题进错题集</div>';
+
+  document.getElementById('btnBack').onclick = ()=>{ stopTimer(); stopAudio(); S.view='home'; render(); };
+  document.getElementById('btnWrongSet').onclick = ()=>{ S.view='wrong'; render(); };
+  document.getElementById('btnDraw').onclick = draw;
+  document.getElementById('btnRead').onclick = ()=>S.current&&playItem(S.current);
+  document.getElementById('btnWrong').onclick = markWrong;
+  document.getElementById('btnReset').onclick = resetRound;
+  document.querySelectorAll('.chip').forEach(cd=>{
+    cd.onclick = ()=>playItem(S.drawn[parseInt(cd.dataset.i)]);
+  });
+}
+function itemChipHtml(it){
+  return esc(it.t)+'<small>'+(it.type==='w'?'词':'')+'</small>';
+}
+
+/* ---------- 错题集 ---------- */
+function renderWrong(){
+  const rows = wrongSet.map((w,i)=>{
+    const disp = w.type==='w' ? '<span class="pinyin-word" style="font-size:22px">'+esc(w.t)+'</span>' : '<span class="pinyin-big" style="font-size:30px">'+esc(w.t)+'</span>';
+    return '<div class="wrong-item">'+
+      '<div class="w-t">'+disp+'<span class="src">'+esc(w.chTitle)+(w.chars?' · '+esc(w.chars):'')+'</span></div>'+
+      '<button class="w-play" data-i="'+i+'">🔊</button>'+
+      '<button class="w-del" data-i="'+i+'">移除</button>'+
+      '</div>';
+  }).join('');
+  $app.innerHTML =
+    '<div class="topbar"><button class="btn-back" id="btnBack2">‹ 返回</button>'+
+    '<div class="top-title">📕 错题集</div><div style="width:60px"></div></div>'+
+    '<div class="wrong-head">'+
+      '<button class="w-practice" id="btnPractice">▶ 练习错题（'+wrongSet.length+'）</button>'+
+      '<button class="w-clear" id="btnClear">🗑 清空</button>'+
+    '</div>'+
+    (rows? '<div class="wrong-list">'+rows+'</div>'
+         : '<div class="empty-tip"><span class="emo">🌟</span>错题集空空如也<br>练习时点「记错」就会收进来<br>已掌握的题点「移除」即可去掉</div>');
+  document.getElementById('btnBack2').onclick = ()=>{ S.view='home'; render(); };
+  document.getElementById('btnPractice').onclick = ()=>{
+    if(!wrongSet.length){ toast('还没有错题哦'); return; }
+    openChapter('wrong');
+  };
+  document.getElementById('btnClear').onclick = ()=>{
+    if(!wrongSet.length){ toast('错题集本来就是空的'); return; }
+    wrongSet = []; saveStore(); render(); toast('错题集已清空');
+  };
+  document.querySelectorAll('.w-play').forEach(b=>b.onclick = ()=>playItem(wrongSet[parseInt(b.dataset.i)]));
+  document.querySelectorAll('.w-del').forEach(b=>{
+    b.onclick = ()=>{ wrongSet.splice(parseInt(b.dataset.i),1); saveStore(); render(); toast('已移除 ✂️'); };
+  });
+}
+
+/* ================= 键盘 ================= */
+document.addEventListener('keydown', (e)=>{
+  if(S.view!=='practice') return;
+  if(e.target && (e.target.tagName==='BUTTON' || e.target.tagName==='INPUT')) return;
+  if(e.key===' '||e.key==='Enter'){ e.preventDefault(); draw(); }
+  else if(e.key==='r'||e.key==='R'){ S.current && playItem(S.current); }
+});
+
+/* ================= 启动 ================= */
+loadStore();
+render();
+</script>
+</body>
+</html>

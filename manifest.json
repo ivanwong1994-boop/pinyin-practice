@@ -1,0 +1,11 @@
+{
+  "name": "拼音过关练习",
+  "short_name": "拼音过关",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFF8E7",
+  "theme_color": "#FF8F00",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
